@@ -47,9 +47,13 @@ var app = app || {};
     });
 
     // we're assuming they won't visit the same page twice within one second
-    pageInstanceUID = Math.floor(Date.now() / 1000);
-    app.fb = new Firebase('https://android-visualizer.firebaseio.com/users/' + app.uid + '/' + app.hash + '/' + pageInstanceUID);
-
+    app.pageInstanceUID = Math.floor(Date.now() / 1000);
+    // app.fb = new Firebase('https://android-visualizer.firebaseio.com/users/' + app.uid + '/' + app.hash + '/' + pageInstanceUID);
+    console.log('Init Socket');
+    app.socket = io('https://sink-labs.udacity.com/socket.io');
+    app.socket.on('connect', function() {
+      console.log("CONNECTED");
+    });
   };
 
   app.getHashKey = function() {
@@ -74,22 +78,18 @@ var app = app || {};
       viewportMargin: Infinity
     });
 
-    myCodeMirror.on('change', function(e) {
+    myCodeMirror.on('change', function() {
       app.run({autorun: true});
     });
 
     myCodeMirror.on('cursorActivity', function(e) {
       var selection = e.doc.sel.ranges[0];
+
       if (selection.anchor.line === selection.head.line && selection.anchor.ch === selection.head.ch) {
         return false;
       }
-      // storing as a string to circumvent a bug in jsDiff
-      var selectionStr = '';
-      selectionStr += 'anchor: line' + selection.anchor.line + ', char' + selection.anchor.ch + ';';
-      selectionStr += 'head: line' + selection.head.line + ', char' + selection.head.ch + ';';
-      updateState({
-        selection: selectionStr
-      });
+
+      logSelection(selection);
     });
 
     // hooks for debugging
@@ -211,14 +211,52 @@ var app = app || {};
 
     var diff = app.diffEncoder.push(state);
     app.state = state;
-    // console.log(diff);
-    // console.log(app.diffDecoder);
-    // app.diffDecoder.setDiffs(app.diffEncoder.getDiffs());
-    // console.log(app.diffDecoder.getState());
-    // console.log(app.diffDecoder.getState().state);
-    // console.log('pushing', diff);
-    // console.log(app.fb);
-    app.fb.child('diffs').push(diff);
+
+    // console.log('logging diff', diff);
+    app.socket.emit('app.events', [{measurement: 'code',
+      tags: {
+        userid: app.uid,
+        hash: app.hash,
+        uniquePageInstanceID: pageInstanceUID
+      },
+      fields: {
+        value: diff
+      }
+    }]);
+  }
+
+  function logMousePosition(coords) {
+    // console.log('logging coords!! ' + coords.join(', '));
+    app.socket.emit('app.events', [{measurement: 'mousePosition',
+      tags: {
+        userid: app.uid,
+        hash: app.hash,
+        uniquePageInstanceID: pageInstanceUID
+      },
+      fields: {
+        mouseX: coords[0],
+        mouseY: coords[1]
+      }
+    }]);
+  }
+
+  function logSelection(sel) {
+    // console.log('logging selection ' + JSON.stringify(sel));
+    app.socket.emit('app.events', [{measurement: 'selection',
+      tags: {
+        userid: app.uid,
+        hash: app.hash,
+        uniquePageInstanceID: pageInstanceUID
+      },
+      fields: {
+        anchorLine: sel.anchor.line,
+        anchorChar: sel.anchor.ch,
+        anchorXRel: sel.anchor.xRel,
+        headLine: sel.head.line,
+        headChar: sel.head.ch,
+        headXRel: sel.head.xRel,
+      }
+    }]);
   }
 
   // this function evaluates code based on the mode the app is in
@@ -447,41 +485,43 @@ var app = app || {};
   });
 
   var timeOfLastUpdate;
-  var updateDebounceThreshold = 1000;
-  var lastDebouncedState = null;
+  var updateDebounceThreshold = 300;
+  var lastDebouncedMousePosition = null;
   var finalStateUpdateTimeout;
 
   var updateMousePosition = function(e) {
     var offset = $('.CodeMirror').offset();
     var cmOffset = myCodeMirror.getScrollInfo();
-    var mouse = [e.pageX - offset.left + cmOffset.left, e.pageY - offset.top + cmOffset.top];
+    var mouseX = e.pageX - offset.left + cmOffset.left;
+    var mouseY = e.pageY - offset.top + cmOffset.top;
 
-    var state = lastDebouncedState || {};
+    var mouseState = [mouseX, mouseY];
 
     // I'm setting a floor of threshold/4 to give the actual state update
     // a chance to happen. Otherwise, it'd updateDebouncedState exactly on
     // time, not giving normal state updates a chance to happen (and therefore
     // resulting in stale data).
-    var timeToUpdateWithFinalState = Math.max(updateDebounceThreshold / 4, updateDebounceThreshold - (Date.now() - timeOfLastUpdate));
-
-    state.mouse = mouse;
+    var timeToUpdateWithFinalState = Math.max(
+          updateDebounceThreshold / 4,
+          updateDebounceThreshold - (Date.now() - timeOfLastUpdate));
 
     clearTimeout(finalStateUpdateTimeout);
 
     if (timeOfLastUpdate && (Date.now() - timeOfLastUpdate < updateDebounceThreshold)) {
-      lastDebouncedState = state;
-      finalStateUpdateTimeout = setTimeout(updateDebouncedState, timeToUpdateWithFinalState);
+      lastDebouncedMousePosition = mouseState;
+      finalStateUpdateTimeout = setTimeout(logDebouncedMousePosition, timeToUpdateWithFinalState);
       return false;
     }
 
     timeOfLastUpdate = Date.now();
-    lastDebouncedState = null;
-    updateState(state);
+    lastDebouncedMousePosition = null;
+    // updateState(state);
+    logMousePosition(mouseState);
   };
 
-  function updateDebouncedState() {
+  function logDebouncedMousePosition() {
     timeOfLastUpdate = Date.now();
-    updateState(lastDebouncedState);
+    logMousePosition(lastDebouncedMousePosition);
   }
 
   app.androidInit();
