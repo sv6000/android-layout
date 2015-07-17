@@ -11,23 +11,23 @@
  *
  */
 
-(function( global, factory ) {
+(function(global, factory) {
 
-  if ( typeof module === "object" && typeof module.exports === "object" ) {
+  if (typeof module === "object" && typeof module.exports === "object") {
     module.exports = global.document ?
-      factory( global, true ) :
-      function( w ) {
-        if ( !w.document ) {
-          throw new Error( "Diff Engine requires a window with a document" );
+      factory(global, true) :
+      function(w) {
+        if (!w.document) {
+          throw new Error("Diff Engine requires a window with a document");
         }
-        return factory( w );
+        return factory(w);
       };
   } else {
-    factory( global );
+    factory(global);
   }
 
 // Pass this if window is not defined yet
-}(typeof window !== "undefined" ? window : this, function( window, noGlobal ) {
+}(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
 
   function Encoder() {
     var _diffArr;
@@ -68,7 +68,7 @@
     };
 
     /** Converts a state object into a diff object */
-    function _generateDiff (_state) {
+    function _generateDiff(_state) {
       var _diff = {
         ops: []
       };
@@ -198,7 +198,7 @@
      * @param  {[number]} _num - optional index to decode and return (if omitted, returns the final state)
      * @return {[type]}      [state]
      */
-    function _decodeState (_num) {
+    function _decodeState(_num) {
 
       if (_num === undefined) {
         _num = _diffArr.length - 1;
@@ -264,7 +264,7 @@
 
   }
 
-  function DiffEngine () {}
+  function DiffEngine() {}
 
   DiffEngine.prototype.getEncoder = function() {
     return new Encoder();
