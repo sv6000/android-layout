@@ -198,7 +198,7 @@ var app = app || {};
 
     {
   name: 'android:src',
-  pattern: /^\@drawable\/(?:ocean|fish|cake|android|mountains|rocks|cakesmall|marshmallow|patio|umbrellas)+$/
+  pattern: /^\@drawable\/(?:ocean|fish|cake|android|mountains|rocks|cakesmall|marshmallow|patio|umbrellas|car|city|fall|grass|rainbow|street|vegetables)+$/
     },
     {
   name: 'android:scaleType',
