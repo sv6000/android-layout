@@ -10,17 +10,7 @@ var app = app || {};
   // this is the place the user codes
   var myCodeMirror;
 
-  // this is a unique id assigned to the current page
-  var pageInstanceUID;
-
   app.readyToRun = false;
-
-  if (localStorage.uid) {
-    app.uid = JSON.parse(localStorage.uid);
-  } else {
-    app.uid = Date.now().toString(36);
-    localStorage.uid = JSON.stringify(app.uid);
-  }
 
   app.initPage = function() {
     // get the hash key
@@ -39,9 +29,6 @@ var app = app || {};
     requestAnimationFrame(function() {
       myCodeMirror.refresh();
     });
-
-    // we're assuming they won't visit the same page twice within one second
-    app.pageInstanceUID = Math.floor(Date.now() / 1000);
 
   };
 
@@ -395,32 +382,6 @@ var app = app || {};
     $('.input-area').css('font-size', '120%');
     $('html').addClass('tablet-mode');
   }
-
-  // report-an-issue modal event listener
-  $('#issue-dialog').on('shown.bs.modal', function(e) {
-    // grab the code from our codeMirror instance
-    $('#entry_440939498').val(myCodeMirror.getValue());
-
-    // grab the user's uid and path
-    $('#entry_1934743275').val(JSON.parse(localStorage.uid) + '/' + app.hash + '/' + pageInstanceUID);
-  });
-
-  // report-an-issue submittal iframe
-  $('#hidden_iframe').on('load', function(e) {
-    if (submitted) {
-      $('#issue-dialog').modal('hide');
-      $('#issue-submitted-dialog').modal('show');
-
-      // clear everything
-      $('#issue-dialog textarea').val('');
-      $('#entry_1934743275').val('');
-      $('#issue-dialog [type=radio]').prop('checked', false);
-
-      // grab the user's uid and path
-      $('#entry_1934743275').val(JSON.parse(localStorage.uid) + '/' + app.hash + '/' + pageInstanceUID);
-      submitted = false;
-    }
-  });
 
   app.androidInit();
 
