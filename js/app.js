@@ -32,12 +32,6 @@ var app = app || {};
     // calculate editor layout
     refreshEditorLayout();
 
-    app.diffEngine = window.diffEngine();
-
-    app.diffEncoder = app.diffEngine.getEncoder();
-
-    // app.diffDecoder = app.diffEngine.getDecoder([]);
-
     // run the code
     app.run();
 
@@ -48,12 +42,7 @@ var app = app || {};
 
     // we're assuming they won't visit the same page twice within one second
     app.pageInstanceUID = Math.floor(Date.now() / 1000);
-    // app.fb = new Firebase('https://android-visualizer.firebaseio.com/users/' + app.uid + '/' + app.hash + '/' + pageInstanceUID);
-    console.log('Init Socket');
-    app.socket = io('https://sink-labs.udacity.com/socket.io');
-    app.socket.on('connect', function() {
-      console.log("CONNECTED");
-    });
+
   };
 
   app.getHashKey = function() {
@@ -64,11 +53,9 @@ var app = app || {};
       return '';
     }
   };
-
   app.initCodeMirror = function() {
     // clear pre-existing code areas
     $('.input-area').html('');
-
     myCodeMirror = CodeMirror(document.querySelector('.input-area'), {
       value: app.getCodeForHash(),
       mode: "android-xml",
@@ -209,54 +196,7 @@ var app = app || {};
       return false;
     }
 
-    var diff = app.diffEncoder.push(state);
     app.state = state;
-
-    // console.log('logging diff', diff);
-    app.socket.emit('app.events', [{measurement: 'code',
-      tags: {
-        userid: app.uid,
-        hash: app.hash,
-        uniquePageInstanceID: pageInstanceUID
-      },
-      fields: {
-        value: diff
-      }
-    }]);
-  }
-
-  function logMousePosition(coords) {
-    // console.log('logging coords!! ' + coords.join(', '));
-    app.socket.emit('app.events', [{measurement: 'mousePosition',
-      tags: {
-        userid: app.uid,
-        hash: app.hash,
-        uniquePageInstanceID: pageInstanceUID
-      },
-      fields: {
-        mouseX: coords[0],
-        mouseY: coords[1]
-      }
-    }]);
-  }
-
-  function logSelection(sel) {
-    // console.log('logging selection ' + JSON.stringify(sel));
-    app.socket.emit('app.events', [{measurement: 'selection',
-      tags: {
-        userid: app.uid,
-        hash: app.hash,
-        uniquePageInstanceID: pageInstanceUID
-      },
-      fields: {
-        anchorLine: sel.anchor.line,
-        anchorChar: sel.anchor.ch,
-        anchorXRel: sel.anchor.xRel,
-        headLine: sel.head.line,
-        headChar: sel.head.ch,
-        headXRel: sel.head.xRel,
-      }
-    }]);
   }
 
   // this function evaluates code based on the mode the app is in
@@ -456,8 +396,6 @@ var app = app || {};
     $('html').addClass('tablet-mode');
   }
 
-  $('.input-area').mousemove(function(e) { updateMousePosition(e) });
-
   // report-an-issue modal event listener
   $('#issue-dialog').on('shown.bs.modal', function(e) {
     // grab the code from our codeMirror instance
@@ -483,46 +421,6 @@ var app = app || {};
       submitted = false;
     }
   });
-
-  var timeOfLastUpdate;
-  var updateDebounceThreshold = 300;
-  var lastDebouncedMousePosition = null;
-  var finalStateUpdateTimeout;
-
-  var updateMousePosition = function(e) {
-    var offset = $('.CodeMirror').offset();
-    var cmOffset = myCodeMirror.getScrollInfo();
-    var mouseX = e.pageX - offset.left + cmOffset.left;
-    var mouseY = e.pageY - offset.top + cmOffset.top;
-
-    var mouseState = [mouseX, mouseY];
-
-    // I'm setting a floor of threshold/4 to give the actual state update
-    // a chance to happen. Otherwise, it'd updateDebouncedState exactly on
-    // time, not giving normal state updates a chance to happen (and therefore
-    // resulting in stale data).
-    var timeToUpdateWithFinalState = Math.max(
-          updateDebounceThreshold / 4,
-          updateDebounceThreshold - (Date.now() - timeOfLastUpdate));
-
-    clearTimeout(finalStateUpdateTimeout);
-
-    if (timeOfLastUpdate && (Date.now() - timeOfLastUpdate < updateDebounceThreshold)) {
-      lastDebouncedMousePosition = mouseState;
-      finalStateUpdateTimeout = setTimeout(logDebouncedMousePosition, timeToUpdateWithFinalState);
-      return false;
-    }
-
-    timeOfLastUpdate = Date.now();
-    lastDebouncedMousePosition = null;
-    // updateState(state);
-    logMousePosition(mouseState);
-  };
-
-  function logDebouncedMousePosition() {
-    timeOfLastUpdate = Date.now();
-    logMousePosition(lastDebouncedMousePosition);
-  }
 
   app.androidInit();
 
