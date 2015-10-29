@@ -56,16 +56,6 @@ var app = app || {};
       app.run({autorun: true});
     });
 
-    myCodeMirror.on('cursorActivity', function(e) {
-      var selection = e.doc.sel.ranges[0];
-
-      if (selection.anchor.line === selection.head.line && selection.anchor.ch === selection.head.ch) {
-        return false;
-      }
-
-      logSelection(selection);
-    });
-
     // hooks for debugging
     if (localStorage.debug) {
       window.myCodeMirror = myCodeMirror;
