@@ -1,5 +1,10 @@
 var app = app || {};
 
+if (!localStorage.debug) {
+  console.log = function() {};
+  console.debug = function() {};
+}
+
 (function() {
 
   if (location.hash === '#tabletmode') {
