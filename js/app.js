@@ -49,11 +49,13 @@ var app = app || {};
     // we're assuming they won't visit the same page twice within one second
     app.pageInstanceUID = Math.floor(Date.now() / 1000);
     // app.fb = new Firebase('https://android-visualizer.firebaseio.com/users/' + app.uid + '/' + app.hash + '/' + pageInstanceUID);
-    console.log('Init Socket');
-    app.socket = io('https://sink-labs.udacity.com/socket.io');
-    app.socket.on('connect', function() {
-      console.log("CONNECTED");
-    });
+    // console.log('Init Socket');
+    // app.socket = io('https://sink-labs.udacity.com/socket.io');
+    // app.socket.on('connect', function() {
+    //   console.log("CONNECTED");
+    // });
+
+    console.log("INIT!!!");
   };
 
   app.getHashKey = function() {
@@ -213,50 +215,50 @@ var app = app || {};
     app.state = state;
 
     // console.log('logging diff', diff);
-    app.socket.emit('app.events', [{measurement: 'code',
-      tags: {
-        userid: app.uid,
-        hash: app.hash,
-        uniquePageInstanceID: pageInstanceUID
-      },
-      fields: {
-        value: diff
-      }
-    }]);
+    // app.socket.emit('app.events', [{measurement: 'code',
+    //   tags: {
+    //     userid: app.uid,
+    //     hash: app.hash,
+    //     uniquePageInstanceID: pageInstanceUID
+    //   },
+    //   fields: {
+    //     value: diff
+    //   }
+    // }]);
   }
 
   function logMousePosition(coords) {
     // console.log('logging coords!! ' + coords.join(', '));
-    app.socket.emit('app.events', [{measurement: 'mousePosition',
-      tags: {
-        userid: app.uid,
-        hash: app.hash,
-        uniquePageInstanceID: pageInstanceUID
-      },
-      fields: {
-        mouseX: coords[0],
-        mouseY: coords[1]
-      }
-    }]);
+    // app.socket.emit('app.events', [{measurement: 'mousePosition',
+    //   tags: {
+    //     userid: app.uid,
+    //     hash: app.hash,
+    //     uniquePageInstanceID: pageInstanceUID
+    //   },
+    //   fields: {
+    //     mouseX: coords[0],
+    //     mouseY: coords[1]
+    //   }
+    // }]);
   }
 
   function logSelection(sel) {
     // console.log('logging selection ' + JSON.stringify(sel));
-    app.socket.emit('app.events', [{measurement: 'selection',
-      tags: {
-        userid: app.uid,
-        hash: app.hash,
-        uniquePageInstanceID: pageInstanceUID
-      },
-      fields: {
-        anchorLine: sel.anchor.line,
-        anchorChar: sel.anchor.ch,
-        anchorXRel: sel.anchor.xRel,
-        headLine: sel.head.line,
-        headChar: sel.head.ch,
-        headXRel: sel.head.xRel,
-      }
-    }]);
+    // app.socket.emit('app.events', [{measurement: 'selection',
+    //   tags: {
+    //     userid: app.uid,
+    //     hash: app.hash,
+    //     uniquePageInstanceID: pageInstanceUID
+    //   },
+    //   fields: {
+    //     anchorLine: sel.anchor.line,
+    //     anchorChar: sel.anchor.ch,
+    //     anchorXRel: sel.anchor.xRel,
+    //     headLine: sel.head.line,
+    //     headChar: sel.head.ch,
+    //     headXRel: sel.head.xRel,
+    //   }
+    // }]);
   }
 
   // this function evaluates code based on the mode the app is in
